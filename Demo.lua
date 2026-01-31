@@ -377,7 +377,7 @@ local TargetPartName = "Head"
 -- Система предсказания движения (Prediction)
 local PredictionSettings = {
     Enabled = true,           -- Включить предсказание
-    PredictionTime = 0.12,    -- Время упреждения в секундах (настрой под свой пинг)
+    PredictionTime = 0.035,   -- Снижено для более точной стрельбы в хитбокс (было 0.12)
     MaxPrediction = 5,        -- Максимальное смещение в studs
     SmoothPrediction = true   -- Плавное предсказание
 }
@@ -479,8 +479,9 @@ local function IsVisible(TargetPart)
 end
 
 local function GetRandomPart()
-    if not Settings.Aimbot.RandomizePart then return "Head" end
-    return (math.random(1, 100) <= 45) and "Head" or "UpperTorso"
+    if not Settings.Aimbot.RandomizePart then return "UpperTorso" end
+    -- 15% шанс в голову, 85% в тело (для стабильности попаданий)
+    return (math.random(1, 100) <= 15) and "Head" or "UpperTorso"
 end
 
 local function GetClosestPlayer()
