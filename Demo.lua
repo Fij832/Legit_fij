@@ -374,75 +374,15 @@ FOVCircle.Visible = Settings.Visuals.ShowFOV
 local CurrentTarget = nil
 local TargetPartName = "Head"
 
--- Система предсказания движения (Prediction)
-local PredictionSettings = {
-    Enabled = true,           -- Включить предсказание
-    PredictionTime = 0.035,   -- Снижено для более точной стрельбы в хитбокс (было 0.12)
-    MaxPrediction = 5,        -- Максимальное смещение в studs
-    SmoothPrediction = true   -- Плавное предсказание
-}
-
--- Хранение предыдущих позиций для расчёта скорости
-local TargetVelocities = {}
-local LastPositions = {}
-local LastUpdateTime = {}
-
--- === АИМАССИСТ БЕЗ ПРОВЕРКИ НА КОМАНДУ (работает на всех) ===
+-- === АИМАССИСТ БЕЗ ПРЕДСКАЗАНИЙ (HitReg Improved) ===
 local function IsEnemy(Player)
     if not Player then return false end
-    return true -- Работает на всех игроков
-end
-
--- Функция расчёта скорости цели
-local function GetTargetVelocity(character)
-    if not character then return Vector3.new(0, 0, 0) end
+    if not Settings.Aimbot.TeamCheck then return true end
     
-    local hrp = character:FindFirstChild("HumanoidRootPart")
-    if not hrp then return Vector3.new(0, 0, 0) end
+    -- Проверка на команду (TeamColor)
+    if LocalPlayer.TeamColor == Player.TeamColor then return false end
     
-    local charId = character:GetFullName()
-    local currentPos = hrp.Position
-    local currentTime = tick()
-    
-    if LastPositions[charId] and LastUpdateTime[charId] then
-        local deltaTime = currentTime - LastUpdateTime[charId]
-        if deltaTime > 0 and deltaTime < 0.5 then -- Игнорируем слишком старые данные
-            local deltaPos = currentPos - LastPositions[charId]
-            local velocity = deltaPos / deltaTime
-            
-            -- Плавное обновление скорости
-            if PredictionSettings.SmoothPrediction and TargetVelocities[charId] then
-                velocity = TargetVelocities[charId]:Lerp(velocity, 0.3)
-            end
-            
-            TargetVelocities[charId] = velocity
-        end
-    end
-    
-    LastPositions[charId] = currentPos
-    LastUpdateTime[charId] = currentTime
-    
-    return TargetVelocities[charId] or Vector3.new(0, 0, 0)
-end
-
--- Функция предсказания позиции
-local function GetPredictedPosition(targetPart, character)
-    if not PredictionSettings.Enabled then
-        return targetPart.Position
-    end
-    
-    local velocity = GetTargetVelocity(character)
-    local prediction = velocity * PredictionSettings.PredictionTime
-    
-    -- Ограничиваем максимальное предсказание
-    if prediction.Magnitude > PredictionSettings.MaxPrediction then
-        prediction = prediction.Unit * PredictionSettings.MaxPrediction
-    end
-    
-    -- Не предсказываем вертикальное движение (Y) слишком сильно
-    prediction = Vector3.new(prediction.X, prediction.Y * 0.3, prediction.Z)
-    
-    return targetPart.Position + prediction
+    return true
 end
 
 local function UpdateFOV()
@@ -478,22 +418,16 @@ local function IsVisible(TargetPart)
     return true
 end
 
-local function GetRandomPart()
-    if not Settings.Aimbot.RandomizePart then return "UpperTorso" end
-    -- 15% шанс в голову, 85% в тело (для стабильности попаданий)
-    return (math.random(1, 100) <= 15) and "Head" or "UpperTorso"
-end
-
 local function GetClosestPlayer()
     local ClosestDist = Settings.Aimbot.FOV
     local Target = nil
     
     for _, Player in ipairs(Players:GetPlayers()) do
-        -- Добавлена проверка IsEnemy
         if Player ~= LocalPlayer and IsEnemy(Player) and Player.Character then
             local Character = Player.Character
             local Humanoid = Character:FindFirstChild("Humanoid")
-            local PartToCheck = Character:FindFirstChild("Head") or Character:FindFirstChild("HumanoidRootPart")
+            -- СТРОГО ТЕЛО (UpperTorso) ДЛЯ ИДЕАЛЬНОЙ РЕГИСТРАЦИИ УРОНА
+            local PartToCheck = Character:FindFirstChild("UpperTorso") or Character:FindFirstChild("HumanoidRootPart")
             
             if Humanoid and Humanoid.Health > 0 and PartToCheck then
                 local ScreenPos, OnScreen = Camera:WorldToViewportPoint(PartToCheck.Position)
@@ -502,7 +436,9 @@ local function GetClosestPlayer()
                     local MousePos = UserInputService:GetMouseLocation()
                     local Dist = (Vector2.new(ScreenPos.X, ScreenPos.Y) - MousePos).Magnitude
                     
+                    -- Проверяем дистанцию (FOV Check)
                     if Dist < ClosestDist then
+                        -- Проверка видимости (Wall Check)
                         if IsVisible(PartToCheck) then
                             ClosestDist = Dist
                             Target = Character
@@ -523,29 +459,29 @@ RunService.RenderStepped:Connect(function()
         return 
     end
 
+    -- Если цель стала невалидна (умерла/исчезла)
     if not CurrentTarget or not CurrentTarget:FindFirstChild("Humanoid") or CurrentTarget.Humanoid.Health <= 0 then
         CurrentTarget = GetClosestPlayer()
-        if CurrentTarget then
-            TargetPartName = GetRandomPart()
-        end
+        TargetPartName = "UpperTorso" -- Всегда тело
     else
-        -- Проверяем, не перешел ли игрок в нашу команду пока мы целились
+        -- Проверяем, валидна ли цель
         local PlayerFromChar = Players:GetPlayerFromCharacter(CurrentTarget)
         if PlayerFromChar and not IsEnemy(PlayerFromChar) then
             CurrentTarget = nil
             return
         end
 
-        local TargetPart = CurrentTarget:FindFirstChild(TargetPartName) or CurrentTarget:FindFirstChild("Head")
+        -- Всегда целимся в тело
+        local TargetPart = CurrentTarget:FindFirstChild("UpperTorso") or CurrentTarget:FindFirstChild("HumanoidRootPart")
         
         if TargetPart then
-            -- Используем предсказание позиции!
-            local PredictedPos = GetPredictedPosition(TargetPart, CurrentTarget)
-            local ScreenPos, OnScreen = Camera:WorldToViewportPoint(PredictedPos)
+            -- БЕЗ ПРЕДСКАЗАНИЙ (ПРЯМАЯ НАВОДКА)
+            local RealPos = TargetPart.Position
+            local ScreenPos, OnScreen = Camera:WorldToViewportPoint(RealPos)
             local MousePos = UserInputService:GetMouseLocation()
             local Dist = (Vector2.new(ScreenPos.X, ScreenPos.Y) - MousePos).Magnitude
             
-            -- Проверка видимости по реальной позиции
+            -- Проверка видимости и FOV
             if not OnScreen or Dist > Settings.Aimbot.FOV or not IsVisible(TargetPart) then
                 CurrentTarget = nil 
             else
@@ -553,6 +489,7 @@ RunService.RenderStepped:Connect(function()
                 local TargetVec = Vector2.new(ScreenPos.X, ScreenPos.Y)
                 local MoveVector = (TargetVec - ScreenCenter)
                 
+                -- Прямая, но плавная наводка
                 mousemoverel(MoveVector.X / Settings.Aimbot.Smoothness, MoveVector.Y / Settings.Aimbot.Smoothness)
             end
         else
