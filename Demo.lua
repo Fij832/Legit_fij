@@ -1,64 +1,7 @@
 --[[
     skinchanger.lua v3 (Added Keyst Rifle & Keyrambit + TeamCheck Fix)
     Updated for Rivals
-    + Auto-Execute on Teleport
 ]]
-
--- =====================================================
--- // AUTO-EXECUTE ON TELEPORT //
--- =====================================================
--- Скрипт автоматически запустится после телепорта между серверами
-
-local SCRIPT_URL = nil -- Если используешь loadstring с URL, укажи тут
--- Пример: SCRIPT_URL = "https://raw.githubusercontent.com/user/repo/main/script.lua"
-
--- Функция для авто-инжекта
-local function SetupAutoExecute()
-    -- Проверяем, есть ли queue_on_teleport (зависит от эксплоита)
-    if queue_on_teleport then
-        local scriptToQueue
-        
-        if SCRIPT_URL then
-            -- Если есть URL — загружаем с него
-            scriptToQueue = [[loadstring(game:HttpGet("]] .. SCRIPT_URL .. [["))()]]
-        else
-            -- Если нет URL — используем getscriptbytecode для копирования текущего скрипта
-            -- Или просто повторно запускаем через executor
-            scriptToQueue = [[
-                -- Auto-reinjected after teleport
-                repeat task.wait() until game:IsLoaded()
-                task.wait(2) -- Ждём полной загрузки
-                
-                -- Попробуй указать путь к своему скрипту здесь:
-                -- loadstring(readfile("Demo.lua"))()
-                
-                -- Или URL:
-                -- loadstring(game:HttpGet("YOUR_SCRIPT_URL"))()
-                
-                print("[AutoExec] Waiting for manual re-injection...")
-            ]]
-        end
-        
-        queue_on_teleport(scriptToQueue)
-        print("[AutoExec] Script queued for teleport!")
-    else
-        warn("[AutoExec] queue_on_teleport not available in your executor!")
-    end
-end
-
--- Вызываем сразу при загрузке скрипта
-SetupAutoExecute()
-
--- Также отслеживаем событие телепорта для уведомления
-local TeleportService = game:GetService("TeleportService")
-
-TeleportService.TeleportInitFailed:Connect(function(_, teleportResult, errorMessage)
-    warn("[Teleport] Failed:", teleportResult, errorMessage)
-end)
-
-print("[AutoExec] Auto-execute system loaded!")
-
--- =====================================================
 
 local LocalPlayer = game:GetService("Players").LocalPlayer
 local PlayerScripts = LocalPlayer.PlayerScripts
