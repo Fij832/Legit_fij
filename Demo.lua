@@ -277,7 +277,43 @@ local Lighting = game:GetService("Lighting")
 local Workspace = game:GetService("Workspace")
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
 local Camera = Workspace.CurrentCamera
+
+-- // WATERMARK "Legit_fij" // --
+local WatermarkGui = Instance.new("ScreenGui")
+WatermarkGui.Name = "LegitFijWatermark"
+WatermarkGui.IgnoreGuiInset = true
+WatermarkGui.Parent = CoreGui
+
+local WatermarkLabel = Instance.new("TextLabel")
+WatermarkLabel.Name = "LegitFijLabel"
+WatermarkLabel.Parent = WatermarkGui
+WatermarkLabel.BackgroundTransparency = 1
+WatermarkLabel.Position = UDim2.new(0, 30, 0, 45) -- Слева сверху, чуть отступ
+WatermarkLabel.Size = UDim2.new(0, 100, 0, 25)
+WatermarkLabel.Font = Enum.Font.GothamBold
+WatermarkLabel.Text = "Legit_fij"
+WatermarkLabel.TextColor3 = Color3.fromRGB(200, 200, 255)
+WatermarkLabel.TextSize = 18
+WatermarkLabel.TextStrokeTransparency = 0.5
+WatermarkLabel.TextTransparency = 0.3 -- Полупрозрачный
+WatermarkLabel.XAlignment = Enum.TextXAlignment.Left
+
+-- Анимация переливания
+task.spawn(function()
+    local hue = 0
+    while true do
+        hue = hue + 0.002
+        if hue > 1 then hue = 0 end
+        
+        -- Легкий перелив + пульсация прозрачности
+        WatermarkLabel.TextColor3 = Color3.fromHSV(hue, 0.4, 1) -- Пастельная радуга
+        WatermarkLabel.TextTransparency = 0.3 + (math.sin(os.clock() * 2) * 0.1) -- от 0.2 до 0.4
+        
+        task.wait(0.03)
+    end
+end)
 
 -- // НАСТРОЙКИ ВИЗУАЛА И АИМА // --
 local Settings = {
