@@ -298,7 +298,7 @@ WatermarkLabel.TextColor3 = Color3.fromRGB(200, 200, 255)
 WatermarkLabel.TextSize = 18
 WatermarkLabel.TextStrokeTransparency = 0.5
 WatermarkLabel.TextTransparency = 0.3 -- Полупрозрачный
-WatermarkLabel.XAlignment = Enum.TextXAlignment.Left
+WatermarkLabel.TextXAlignment = Enum.TextXAlignment.Left
 
 -- Анимация переливания
 task.spawn(function()
