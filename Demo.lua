@@ -483,8 +483,8 @@ local function GetClosestPlayer()
         if Player ~= LocalPlayer and IsEnemy(Player) and Player.Character then
             local Character = Player.Character
             local Humanoid = Character:FindFirstChild("Humanoid")
-            -- СТРОГО ТЕЛО (UpperTorso) ДЛЯ ИДЕАЛЬНОЙ РЕГИСТРАЦИИ УРОНА
-            local PartToCheck = Character:FindFirstChild("UpperTorso") or Character:FindFirstChild("HumanoidRootPart")
+            -- Приоритет на HumanoidRootPart для стабильности
+            local PartToCheck = Character:FindFirstChild("HumanoidRootPart") or Character:FindFirstChild("UpperTorso")
             
             if Humanoid and Humanoid.Health > 0 and PartToCheck then
                 local ScreenPos, OnScreen = Camera:WorldToViewportPoint(PartToCheck.Position)
@@ -528,8 +528,8 @@ RunService.RenderStepped:Connect(function()
             return
         end
 
-        -- Всегда целимся в тело
-        local TargetPart = CurrentTarget:FindFirstChild("UpperTorso") or CurrentTarget:FindFirstChild("HumanoidRootPart")
+        -- Приоритет на HumanoidRootPart для лучшей регистрации (оно не вращается от анимаций)
+        local TargetPart = CurrentTarget:FindFirstChild("HumanoidRootPart") or CurrentTarget:FindFirstChild("UpperTorso")
         
         if TargetPart then
             -- БЕЗ ПРЕДСКАЗАНИЙ (ПРЯМАЯ НАВОДКА)
