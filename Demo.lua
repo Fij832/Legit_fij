@@ -281,35 +281,56 @@ local CoreGui = game:GetService("CoreGui")
 local Camera = Workspace.CurrentCamera
 
 -- // WATERMARK "Legit_fij" // --
+if CoreGui:FindFirstChild("LegitFijWatermark") then
+    CoreGui.LegitFijWatermark:Destroy()
+end
+
 local WatermarkGui = Instance.new("ScreenGui")
 WatermarkGui.Name = "LegitFijWatermark"
 WatermarkGui.IgnoreGuiInset = true
 WatermarkGui.Parent = CoreGui
 
+local WatermarkFrame = Instance.new("Frame")
+WatermarkFrame.Name = "LegitFijFrame"
+WatermarkFrame.Parent = WatermarkGui
+WatermarkFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+WatermarkFrame.BackgroundTransparency = 0.2
+WatermarkFrame.Position = UDim2.new(0, 300, 0, 10) -- Сдвинул еще правее (было 120)
+WatermarkFrame.Size = UDim2.new(0, 130, 0, 34) -- Чуть уже, т.к. нет картинки
+
+local UIStroke = Instance.new("UIStroke")
+UIStroke.Parent = WatermarkFrame
+UIStroke.Thickness = 2
+UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+UIStroke.Color = Color3.fromRGB(200, 200, 255)
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 6)
+UICorner.Parent = WatermarkFrame
+
+-- Текст с тыквой
 local WatermarkLabel = Instance.new("TextLabel")
-WatermarkLabel.Name = "LegitFijLabel"
-WatermarkLabel.Parent = WatermarkGui
+WatermarkLabel.Name = "Title"
+WatermarkLabel.Parent = WatermarkFrame
 WatermarkLabel.BackgroundTransparency = 1
-WatermarkLabel.Position = UDim2.new(0, 30, 0, 45) -- Слева сверху, чуть отступ
-WatermarkLabel.Size = UDim2.new(0, 100, 0, 25)
+WatermarkLabel.Position = UDim2.new(0, 0, 0, 0)
+WatermarkLabel.Size = UDim2.new(1, 0, 1, 0) -- На всю ширину
 WatermarkLabel.Font = Enum.Font.GothamBold
-WatermarkLabel.Text = "Legit_fij"
+WatermarkLabel.Text = "🎃 Legit_fij" -- Смайлик тут
 WatermarkLabel.TextColor3 = Color3.fromRGB(200, 200, 255)
 WatermarkLabel.TextSize = 18
-WatermarkLabel.TextStrokeTransparency = 0.5
-WatermarkLabel.TextTransparency = 0.3 -- Полупрозрачный
-WatermarkLabel.TextXAlignment = Enum.TextXAlignment.Left
+WatermarkLabel.TextXAlignment = Enum.TextXAlignment.Center -- По центру
 
 -- Анимация переливания
 task.spawn(function()
     local hue = 0
     while true do
-        hue = hue + 0.002
+        hue = hue + 0.005
         if hue > 1 then hue = 0 end
         
-        -- Легкий перелив + пульсация прозрачности
-        WatermarkLabel.TextColor3 = Color3.fromHSV(hue, 0.4, 1) -- Пастельная радуга
-        WatermarkLabel.TextTransparency = 0.3 + (math.sin(os.clock() * 2) * 0.1) -- от 0.2 до 0.4
+        local color = Color3.fromHSV(hue, 0.6, 1)
+        WatermarkLabel.TextColor3 = color
+        UIStroke.Color = color
         
         task.wait(0.03)
     end
